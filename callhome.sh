@@ -1,34 +1,67 @@
 #!/bin/bash
+# Copyright 2016 Ciena Corporation
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# you may obtain a copy of the License at
+#
+#    http://www.apache.org/license/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, sofware
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 PROG=`basename $0`
+
+INTERFACE="ma1"
+PORT="4321"
+URI="callhome"
 
 function usage() {
     echo "$PROG [options]"
     echo "-h, --help                display this message"
-    echo "-i, --interface <name>    specify the interface to use to gleam information, default ma1"
+    echo "-i, --interface <name>    specify the interface to use to gleam information, default: '$INTERFACE'"
+    echo "-p, --port <number>       port number on which to contact the configuration server, default: '$PORT'"
+    echo "-U, --uri <path>          URI path on which to contact the configuraiton server, default: '$URI'"
 }
-
-INTERFACE="ma1"
 
 while [ $# -gt 0 ]; do
   case $1 in
     -h|--help)
       usage
-      exit 1
+      exit 0
       ;;
     -i|--interface)
       shift
       if [ $# -eq 0 ]; then
         echo "[error] must specify an interface name to use"  >&2
         usage
-        exit
+        exit 2
       fi
       INTERFACE=$1
+      ;;
+    -p|--port)
+      shift
+      if [ $# -eq 0 ]; then
+        echo "[error] must specify a port number to use" >&2
+        usage
+        exit 2
+      fi
+      PORT=$1
+      ;;
+    -u|--uri)
+      shift
+      if [ $# -eq 0 ]; then
+        echo "[error] must specify a URI to use" >&2
+        exit 2
+      fi
+      URI=$1
       ;;
     *)
       echo "[error] unknown command line option '$1'" >&2
       usage
-      exit
+      exit 0
       ;;
   esac
   shift
@@ -71,7 +104,7 @@ INTERVAL=1
 INCREMENT_FACTOR=2
 MAX_INTERVAL=300
 while true; do
-  REQUEST="wget -t 5 -O $INITIALIZATION -S http://$SERVER:4321/callhome?mac=$MAC&boottime=$BOOTTIME"
+  REQUEST="wget -t 5 -O $INITIALIZATION -S http://$SERVER:$PORT/$URI?mac=$MAC&boottime=$BOOTTIME"
   echo "[info] call home request: $REQUEST"
   RESULT=`$REQUEST 2>&1 | grep HTTP/ | grep "200 OK"`
   ERROR=$?
