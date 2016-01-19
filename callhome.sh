@@ -17,6 +17,7 @@ PROG=`basename $0`
 INTERFACE="ma1"
 PORT="4321"
 URI="callhome"
+CLASS=`uname -r | awk -F- '{print $3}'`
 
 function usage() {
     echo "$PROG [options]"
@@ -24,6 +25,7 @@ function usage() {
     echo "-i, --interface <name>    specify the interface to use to gleam information, default: '$INTERFACE'"
     echo "-p, --port <number>       port number on which to contact the configuration server, default: '$PORT'"
     echo "-U, --uri <path>          URI path on which to contact the configuraiton server, default: '$URI'"
+    echo "-c, --class <label>       device class that the client will advertise to the configuration service, default: '$CLASS'"
 }
 
 while [ $# -gt 0 ]; do
@@ -54,9 +56,19 @@ while [ $# -gt 0 ]; do
       shift
       if [ $# -eq 0 ]; then
         echo "[error] must specify a URI to use" >&2
+        usage
         exit 2
       fi
       URI=$1
+      ;;
+    -c|--class)
+      shift
+      if [ $# -eq 0 ]; then
+        echo "[error] must specify a device class to advertise" >&2
+        usage
+        exit 2
+      fi
+      CLASS=$1
       ;;
     *)
       echo "[error] unknown command line option '$1'" >&2
@@ -104,7 +116,7 @@ INTERVAL=1
 INCREMENT_FACTOR=2
 MAX_INTERVAL=300
 while true; do
-  REQUEST="wget -t 5 -O $INITIALIZATION -S http://$SERVER:$PORT/$URI?mac=$MAC&boottime=$BOOTTIME"
+  REQUEST="wget -t 5 -O $INITIALIZATION -S http://$SERVER:$PORT/$URI?mac=$MAC&boottime=$BOOTTIME&class=$CLASS"
   echo "[info] call home request: $REQUEST"
   RESULT=`$REQUEST 2>&1 | grep HTTP/ | grep "200 OK"`
   ERROR=$?
