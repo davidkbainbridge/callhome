@@ -12,7 +12,7 @@ func main() {
 		ListenPath:             "callhome",
 		ConfigurationDirectory: "/tmp",
 	}
-	err := server.Listen()
+	err := server.ListenAndServe()
 	if err != nil {
 		log.Fatalf("failed to start configuration server: %s", err.Error())
 	}
