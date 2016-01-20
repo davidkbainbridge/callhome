@@ -10,7 +10,7 @@ func main() {
 		ListenIP:               "0.0.0.0",
 		ListenPort:             4321,
 		ListenPath:             "callhome",
-		ConfigurationDirectory: "/tmp",
+		ConfigurationDirectory: "/configurations",
 	}
 	err := server.ListenAndServe()
 	if err != nil {
