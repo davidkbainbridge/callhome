@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-// Provides a simple configuration service for CORD pods. This server will accept request from
+// Package configserver provides a simple configuration service for CORD pods. This server will accept request from
 // client devices and return to them a pre-defined configuration file that can be specified
 // as a file on the disk identified by a device class, MAC address, or both.
 package configserver
@@ -26,7 +26,7 @@ import (
 	"os"
 )
 
-// Represents the configuration for the "configuration" server. This is used to specify the parameters
+// Server represents the configuration for the "configuration" server. This is used to specify the parameters
 // for the server, IP, port on which it listens as well as where it attempts to locate device configuration
 // files.
 type Server struct {
@@ -36,30 +36,30 @@ type Server struct {
 	ConfigurationDirectory string
 }
 
-// Represents a registration dataum from a client.
+// client represents a registration dataum from a client.
 type client struct {
-	class       string
-	mac_address string
-	boot_time   string
+	class      string
+	macAddress string
+	bootTime   string
 }
 
 // registers a client with the configuraiton system, can be use to optimize when and what
 // is given back to the client as an initialization function
-func (s *Server) register_client(c client) {
-	log.Printf("REGISTER: {%s, %s, %s}", c.mac_address, c.class, c.boot_time)
+func (s *Server) registerClient(c client) {
+	log.Printf("REGISTER: {%s, %s, %s}", c.macAddress, c.class, c.bootTime)
 }
 
 // handles a call home request from the client. The client is registered and then if an initialization
 // file can be located it is returned to the client.
-func (s *Server) call_home_handler(w http.ResponseWriter, r *http.Request) {
+func (s *Server) callHomeHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
-        c := client{
-		class:       r.Form["class"][0],
-		mac_address: r.Form["mac"][0],
-		boot_time:   r.Form["boottime"][0],
+	c := client{
+		class:      r.Form["class"][0],
+		macAddress: r.Form["mac"][0],
+		bootTime:   r.Form["boottime"][0],
 	}
 
-	s.register_client(c)
+	s.registerClient(c)
 
 	// Search for a client configuration file in the following order
 	//      $DIR/config.$CLASS.$MAC
@@ -67,8 +67,8 @@ func (s *Server) call_home_handler(w http.ResponseWriter, r *http.Request) {
 	//      $DIR/config.$CLASS
 	//      $DIR/config
 	search := []string{
-		fmt.Sprintf("%s/config.%s.%s", s.ConfigurationDirectory, c.class, c.mac_address),
-		fmt.Sprintf("%s/config.%s", s.ConfigurationDirectory, c.mac_address),
+		fmt.Sprintf("%s/config.%s.%s", s.ConfigurationDirectory, c.class, c.macAddress),
+		fmt.Sprintf("%s/config.%s", s.ConfigurationDirectory, c.macAddress),
 		fmt.Sprintf("%s/config.%s", s.ConfigurationDirectory, c.class),
 		fmt.Sprintf("%s/config", s.ConfigurationDirectory)}
 
@@ -87,9 +87,9 @@ func (s *Server) call_home_handler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Start the configuration server and have it listen to and respond to HTTP request
+// ListenAndServe start the configuration server and have it listen to and respond to HTTP request
 func (s *Server) ListenAndServe() error {
 	log.Printf("Listening on: %s:%d/%s", s.ListenIP, s.ListenPort, s.ListenPath)
-        http.HandleFunc("/"+s.ListenPath, s.call_home_handler)
+	http.HandleFunc("/"+s.ListenPath, s.callHomeHandler)
 	return http.ListenAndServe(fmt.Sprintf("%s:%d", s.ListenIP, s.ListenPort), nil)
 }
